@@ -1,4 +1,4 @@
-const { Router } = require('express')
+const { Router, application } = require('express')
 const { v4 } = require('uuid')
 
 const routes = Router()
@@ -24,6 +24,18 @@ routes.post('/accounts', (request, response) => {
   costumers.push(consumer)
 
   response.status(201).send()
+})
+
+routes.get('/statement', (request, response) => {
+  const { cpf } = request.headers
+
+  const customer = costumers.find(customer => customer.cpf === cpf)
+
+  if (!customer) {
+    return response.status(400).json({ error: 'Customer not found' })
+  }
+
+  return response.json(customer.statement)
 })
 
 exports.routes = routes
