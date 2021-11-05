@@ -19,6 +19,19 @@ function verifyAnExistingAccount(request, response, next) {
   return next()
 }
 
+function getBalance(statement) {
+  const balance = statement.reduce((acc, transaction) => {
+    if (transaction.type === 'credit') {
+      return (acc += transaction.amount)
+    }
+    if (transaction.type === 'debit') {
+      return (acc -= transaction.amount)
+    }
+  }, 0)
+
+  return balance
+}
+
 routes.post('/accounts', (request, response) => {
   const { name, cpf } = request.body
 
@@ -47,15 +60,36 @@ routes.get('/statement', verifyAnExistingAccount, (request, response) => {
 })
 
 routes.post('/deposit', verifyAnExistingAccount, (request, response) => {
-  const { value, description } = request.body
+  const { amount, description } = request.body
 
   const customer = request.customer
 
   const statementOperation = {
     description,
-    value,
+    amount,
     created_at: new Date(),
     type: 'credit',
+  }
+
+  customer.statement.push(statementOperation)
+
+  return response.status(201).send()
+})
+
+routes.post('/withdraw', verifyAnExistingAccount, (request, response) => {
+  const { amount } = request.body
+  const customer = request.customer
+
+  const balance = getBalance(customer.statement)
+
+  if (balance < amount) {
+    return response.status(400).json({ error: 'Insufficient founds!' })
+  }
+
+  const statementOperation = {
+    amount,
+    created_at: new Date(),
+    type: 'debit',
   }
 
   customer.statement.push(statementOperation)
