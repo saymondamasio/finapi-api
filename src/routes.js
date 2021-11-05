@@ -46,4 +46,21 @@ routes.get('/statement', verifyAnExistingAccount, (request, response) => {
   return response.json(customer.statement)
 })
 
+routes.post('/deposit', verifyAnExistingAccount, (request, response) => {
+  const { value, description } = request.body
+
+  const customer = request.customer
+
+  const statementOperation = {
+    description,
+    value,
+    created_at: new Date(),
+    type: 'credit',
+  }
+
+  customer.statement.push(statementOperation)
+
+  return response.status(201).send()
+})
+
 exports.routes = routes
